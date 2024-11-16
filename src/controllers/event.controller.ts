@@ -33,7 +33,7 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
 
       let adjustedTicketPrice = Number(ticket_price);
 
-      if (ticket_id == 2 && adjustedTicketPrice > 1)
+      if (ticket_id == 2 && adjustedTicketPrice >= 1)
          throw new Error(
             "The ticket cannot have a price because it is marked as free"
          );
