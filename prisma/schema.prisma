@@ -74,16 +74,11 @@ model Ticket_Type {
   event Event[]
 }
 
-enum Event_Category_Name {
-  Music
-  Workshop
-  Food
-  Travel
-}
+
 
 model Event_Category {
   event_category_id Int @id @default(autoincrement())
-  event_category_name Event_Category_Name
+  event_category_name String
   event Event[]
 }
 
