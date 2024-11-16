@@ -33,13 +33,10 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
 
       let adjustedTicketPrice = Number(ticket_price);
 
-      if (ticket_id === 2) {
-         adjustedTicketPrice = 0;
-      } else if (ticket_id <= 1) {
-         if (adjustedTicketPrice <= 1) {
-            throw new Error("Ticket price is required");
-         }
-      }
+      if (ticket_id == 2 && adjustedTicketPrice > 1)
+         throw new Error(
+            "The ticket cannot have a price because it is marked as free"
+         );
 
       const newEvent = await prisma.event.create({
          data: {
