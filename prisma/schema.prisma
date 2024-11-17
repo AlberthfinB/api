@@ -14,101 +14,128 @@ datasource db {
 }
 
 model User {
-  user_id Int @id @default(autoincrement())
-  name String @db.VarChar(45)
-  password String @db.VarChar(15)
-  email String @unique
-  referal_code String @db.VarChar(225)
-  created_at DateTime @default(now())
-  role_id Int
-  role Role @relation(fields: [role_id],references: [role_id])
-  user_point User_Point[]
-  event Event[]
-  transaction Transaction[]
+  user_id      Int           @id @default(autoincrement())
+  name         String        @db.VarChar(45)
+  password     String        @db.VarChar(15)
+  email        String        @unique
+  referal_code String        @db.VarChar(225)
+  created_at   DateTime      @default(now())
+  role_id      Int
+  role         Role          @relation(fields: [role_id], references: [role_id])
+  user_point   User_Point[]
+  event        Event[]
+  transaction  Transaction[]
+  Coupon       Coupon[]
 }
-
 
 model Role {
-  role_id Int @id @default(autoincrement())
+  role_id   Int    @id @default(autoincrement())
   role_name String @unique
-  user User[]
+  user      User[]
 }
 
-model User_Point{
-  user_point_id Int @id @default(autoincrement())
-  points Decimal @db.Decimal(18,2)
-  created_date DateTime @default(now())
+model User_Point {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  points      Int
   expiry_date DateTime
-  update_at DateTime @updatedAt
-  user_id Int
-  user User @relation(fields: [user_id],references: [user_id])
+  created_at  DateTime @default(now())
+  user        User     @relation(fields: [user_id], references: [user_id])
 }
 
-
-
-model Event{
-  event_id Int @id @default(autoincrement())
-  name_event String @db.VarChar(225)
-  location String @db.VarChar(225)
-  description String @db.VarChar(1000)
-  image_event String
-  ticket_price Decimal @db.Decimal(18,2)
-  promo_event String
-  seats Int
-  status_event String
-  create_date DateTime @default(now())
-  event_expired DateTime
-  user_id Int
-  user User @relation(fields: [user_id],references: [user_id])
-  ticket_id Int
-  ticket_type Ticket_Type @relation(fields: [ticket_id],references: [ticket_id])
-  event_category_id Int 
-  event_category Event_Category @relation(fields: [event_category_id],references: [event_category_id])
-  transaction_detail Transaction_Detail[]
+model Event {
+  event_id           Int                  @id @default(autoincrement())
+  name_event         String               @db.VarChar(225)
+  location           String               @db.VarChar(225)
+  description        String               @db.VarChar(1000)
+  image_event        String
+  ticket_price       Decimal              @db.Decimal(18, 2)
+  promo_event        String
+  seats              Int
+  status_event       String
+  create_date        DateTime             @default(now())
+  event_expired      DateTime
+  user_id            Int
+  user               User                 @relation(fields: [user_id], references: [user_id])
+  ticket_id          Int
+  ticket_type        Ticket_Type          @relation(fields: [ticket_id], references: [ticket_id])
+  event_category_id  Int
+  event_category     Event_Category       @relation(fields: [event_category_id], references: [event_category_id])
+  transaction_detail Transaction_detail[]
+  Promotion          Promotion[]
 }
-
 
 model Ticket_Type {
-  ticket_id Int @id @default(autoincrement())
-  ticket_type String
-  event Event[]
+  ticket_id          Int                  @id @default(autoincrement())
+  ticket_type        String
+  event              Event[]
+  Transaction_detail Transaction_detail[]
 }
-
-
 
 model Event_Category {
-  event_category_id Int @id @default(autoincrement())
+  event_category_id   Int     @id @default(autoincrement())
   event_category_name String
-  event Event[]
+  event               Event[]
 }
 
-model Transaction_Detail {
-  transaction_detail_id Int @id @default(autoincrement())
-  event_id Int 
-  event Event @relation(fields: [event_id],references: [event_id])
-  transaction_id Int
-  transaction Transaction @relation(fields: [transaction_id],references: [transaction_id])
+model Promotion {
+  id          Int      @id @default(autoincrement())
+  event_id    Int
+  event       Event    @relation(fields: [event_id], references: [event_id])
+  type        String
+  discount    Float
+  max_uses    Int      @default(0)
+  valid_until DateTime
 }
 
 model Transaction {
-  transaction_id Int @id @default(autoincrement())
-  transaction_date String @db.VarChar(50)
-  payment_status Boolean @default(false)
-  payment_proof String @db.VarChar(100)
-  payment_date DateTime @default(now())
-  total_payment Decimal @db.Decimal(18,2)
-  payment_code String @db.VarChar(100)
-  discount_point Decimal @db.Decimal(18,2)
-  discount_voucher Decimal @db.Decimal(18,2)
-  total_price Decimal @db.Decimal(18,2)
-  user_id Int 
-  user User @relation(fields: [user_id],references: [user_id])
-  voucher_id Int @unique
-  voucher Voucher @relation(fields: [voucher_id],references: [voucher_id])
-  transaction_detail Transaction_Detail[]
+  id                  Int                  @id @default(autoincrement())
+  user_id             Int
+  user                User                 @relation(fields: [user_id], references: [user_id])
+  total_price         Float //untuk harga total (setelah diskon atau beli banyak tiket)
+  discount            Float                @default(0.0)
+  points_used         Int                  @default(0)
+  coupon_id           Int?
+  coupon              Coupon?              @relation(fields: [coupon_id], references: [id])
+  payment_status_id   Int
+  payment_status      Payment_status       @relation(fields: [payment_status_id], references: [id])
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  transaction_details Transaction_detail[]
 }
 
-model Voucher {
-  voucher_id Int @id @default(autoincrement())
-  Transaction Transaction?
+model Transaction_detail {
+  id             Int         @id @default(autoincrement())
+  transaction_id Int
+  transaction    Transaction @relation(fields: [transaction_id], references: [id])
+  event_id       Int
+  event          Event       @relation(fields: [event_id], references: [event_id])
+  ticket_id      Int
+  ticket         Ticket_Type @relation(fields: [ticket_id], references: [ticket_id])
+  quantity       Int
+  price          Float //untuk informasi harga per ticket (satuan)
+  discount       Float       @default(0.0) // Diskon dari promosi event
+}
+
+model Payment_status {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Coupon {
+  id          Int           @id @default(autoincrement())
+  code        String        @unique
+  discount    Float
+  max_uses    Int           @default(1)
+  used_count  Int           @default(0)
+  user_id     Int?
+  user        User?         @relation(fields: [user_id], references: [user_id])
+  valid_from  DateTime
+  valid_until DateTime
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  Transaction Transaction[]
 }
