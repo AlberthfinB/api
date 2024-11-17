@@ -28,23 +28,25 @@ export const SingleUploader = (filePrefix: string, folderName?: string) => {
 
    const uploadToCloudinary = async (file: Express.Multer.File) => {
       return new Promise<CloudinaryUploadResponse>((resolve, reject) => {
+         const folder = folderName || "events";
          cloudinary.uploader
             .upload_stream(
                {
-                  folder: "events", // folder cloudinary
+                  folder:folder, // folder cloudinary
                   public_id: filePrefix + Date.now(), // nama file di cloudinary
                },
                (error, result) => {
                   if (error) {
                      return reject(error);
                   }
+                  console.log("Upload Result:", result);
                   resolve(result as CloudinaryUploadResponse);
                }
             )
             .end(file.buffer);
       });
    };
-
+  
    return {
       uploadMiddleware: upload,
       uploadToCloudinary: uploadToCloudinary,
