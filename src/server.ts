@@ -3,12 +3,15 @@ import { PORT as port } from "./utils/envConfig";
 import ErrorMiddleware from "./middlewares/error.middleware";
 import authRouter from "./routes/auth.route";
 import firstSeedingData from "./utils/firstSeedingData";
+import eventRouter from "./routes/event.route";
 
 const PORT = Number(port) || 7000;
 
 const app: Application = express();
 
 app.use(express.json());
+
+app.use("/management", eventRouter);
 app.use('/auth', authRouter);
 
 app.use(ErrorMiddleware);

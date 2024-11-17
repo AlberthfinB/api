@@ -14,43 +14,23 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  username     String        @unique
-  password     String
+  user_id      Int           @id @default(autoincrement())
+  name         String        @db.VarChar(45)
+  password     String        @db.VarChar(15)
   email        String        @unique
-  role_id      Int
-  role         Role          @relation(fields: [role_id], references: [id])
-  referal_code String        @unique
-  points       Int           @default(0)
+  referal_code String        @db.VarChar(225)
   created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  events       Event[]
-  transactions Transaction[]
-  reviews      Review[]
-  referred     Referral[]    @relation("ReferrerRelation") //relasi user yang kasih referal jadi ke referrer_id
-  referrals    Referral[]    @relation("RefereeRelation") //relasi user yang pakai kode referalnya jadi ke referee_id
-  user_points  User_Point[]
-  Coupon       Coupon[]
-}
-
-model Referral {
-  id           Int      @id @default(autoincrement())
-  referrer_id  Int //ID user yang kasih referal
-  referee_id   Int //ID user yang pakai referalnya
-  referee_role String   @default("attendee")
-  points       Int      @default(10000)
-  expiry_date  DateTime
-  created_at   DateTime @default(now())
-  referrer     User     @relation("ReferrerRelation", fields: [referrer_id], references: [id])
-  referee      User     @relation("RefereeRelation", fields: [referee_id], references: [id])
+  role_id      Int
+  role         Role          @relation(fields: [role_id], references: [role_id])
+  user_point   User_Point[]
+  event        Event[]
+  transaction  Transaction[]
 }
 
 model Role {
-  id         Int      @id @default(autoincrement())
-  name       String   @unique
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  users      User[]
+  role_id   Int    @id @default(autoincrement())
+  role_name String @unique
+  user      User[]
 }
 
 model User_Point {
@@ -63,63 +43,36 @@ model User_Point {
 }
 
 model Event {
-  id              Int                  @id @default(autoincrement())
-  name            String               @db.VarChar(225)
-  location        String               @db.VarChar(225)
-  description     String
-  image_url       String?
-  date            DateTime
-  time            String
-  category_id     Int
-  category        Event_category       @relation(fields: [category_id], references: [id])
-  seats           Int
-  available_seats Int
-  ticket_price    Float                @default(0.0)
-  ticket_id       Int
-  ticket          Ticket               @relation(fields: [ticket_id], references: [id])
-  status_id       Int
-  status          Event_status         @relation(fields: [status_id], references: [id])
-  organizer_id    Int
-  organizer       User                 @relation(fields: [organizer_id], references: [id])
-  created_at      DateTime             @default(now())
-  updated_at      DateTime             @updatedAt
-  reviews         Review[]
-  promotions      Promotion[]
-  transactions    Transaction_detail[]
+  event_id           Int                  @id @default(autoincrement())
+  name_event         String               @db.VarChar(225)
+  location           String               @db.VarChar(225)
+  description        String               @db.VarChar(1000)
+  image_event        String
+  ticket_price       Decimal              @db.Decimal(18, 2)
+  promo_event        String
+  seats              Int
+  status_event       String
+  create_date        DateTime             @default(now())
+  event_expired      DateTime
+  user_id            Int
+  user               User                 @relation(fields: [user_id], references: [user_id])
+  ticket_id          Int
+  ticket_type        Ticket_Type          @relation(fields: [ticket_id], references: [ticket_id])
+  event_category_id  Int
+  event_category     Event_Category       @relation(fields: [event_category_id], references: [event_category_id])
+  transaction_detail Transaction_Detail[]
 }
 
-model Ticket {
-  id                 Int                  @id @default(autoincrement())
-  ticket_type        String               @unique
-  events             Event[]
-  Transaction_detail Transaction_detail[]
+model Ticket_Type {
+  ticket_id   Int     @id @default(autoincrement())
+  ticket_type String
+  event       Event[]
 }
 
-model Event_status {
-  id          Int      @id @default(autoincrement())
-  status_name String   @unique
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  events      Event[]
-}
-
-model Event_category {
-  id            Int      @id @default(autoincrement())
-  category_name String   @unique
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  events        Event[]
-}
-
-model Review {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  user       User     @relation(fields: [user_id], references: [id])
-  event_id   Int
-  event      Event    @relation(fields: [event_id], references: [id])
-  rating     Int
-  comment    String
-  created_at DateTime @default(now())
+model Event_Category {
+  event_category_id   Int     @id @default(autoincrement())
+  event_category_name String
+  event               Event[]
 }
 
 model Promotion {
