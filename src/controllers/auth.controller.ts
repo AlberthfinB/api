@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import { compare, genSalt, hash } from "bcrypt";
 import crypto from "crypto";
 import { sign } from "jsonwebtoken";
@@ -29,7 +29,7 @@ async function Register(req: Request, res: Response, next: NextFunction) {
    try {
       const { name, email, password, role, referal_code } = req.body;
 
-      if (!["attendee", "event organizer"].includes(role.toLowerCase())) {
+      if (!["participant", "event organizer"].includes(role.toLowerCase())) {
          throw new Error("Invalid role");
       }
 
@@ -42,12 +42,14 @@ async function Register(req: Request, res: Response, next: NextFunction) {
       }
 
       let referralCode = "";
+      let referrer = null;
+      let couponCode = "";
 
-      if (role.toLowerCase() === "attendee") {
+      if (role.toLowerCase() === "participant") {
          referralCode = await checkUniqueReferralCode(generateReferralCode());
 
          if (referal_code) {
-            const referrer = await prisma.user.findUnique({
+            referrer = await prisma.user.findUnique({
                where: { referal_code }
             });
 
@@ -69,7 +71,7 @@ async function Register(req: Request, res: Response, next: NextFunction) {
                data: { points: { increment: pointToAdd } },
             });
 
-            const couponCode = generateCouponCode();
+            couponCode = generateCouponCode();
             await prisma.coupon.create({
                data: {
                   code: couponCode,
@@ -95,22 +97,27 @@ async function Register(req: Request, res: Response, next: NextFunction) {
             name,
             email,
             password: hashedPassword,
-            role_id: role.toLowerCase() === "attendee" ? 1 : 2,
+            role_id: role.toLowerCase() === "participant" ? 1 : 2,
             referal_code: referralCode,
          }
       })
 
-      if (referal_code) {
-         const coupon = await prisma.coupon.findFirst({
-            where: { code: generateCouponCode(), },
+      if (referal_code && referrer) {
+         await prisma.referral.create({
+            data: {
+               referrer_id: referrer.user_id,
+               referee_id: newUser.user_id,
+               points: 10000,
+               expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+            }
          });
+      }
 
-         if (coupon) {
-            await prisma.coupon.update({
-               where: { id: coupon.id },
-               data: { user_id: newUser.user_id },
-            })
-         }
+      if (referal_code) {
+         const coupon = await prisma.coupon.updateMany({
+            where: { code: couponCode, user_id: null },
+            data: { user_id: newUser.user_id },
+         })
       }
 
       res.status(201).json({

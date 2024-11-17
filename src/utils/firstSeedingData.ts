@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function firstSeedingData() {
-    const roles = ['Attendee', 'Event Organizer'];
+    const roles = ['Participant', 'Event Organizer'];
     for (const role of roles) {
         await prisma.role.upsert({
             where: { role_name: role },
