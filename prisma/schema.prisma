@@ -16,16 +16,31 @@ datasource db {
 model User {
   user_id      Int           @id @default(autoincrement())
   name         String        @db.VarChar(45)
-  password     String        @db.VarChar(15)
+  password     String
   email        String        @unique
   referal_code String        @db.VarChar(225)
-  created_at   DateTime      @default(now())
   role_id      Int
   role         Role          @relation(fields: [role_id], references: [role_id])
-  user_point   User_Point[]
+  points       Int           @default(0)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
   event        Event[]
-  transaction  Transaction[]
-  Coupon       Coupon[]
+  transactions Transaction[]
+  user_points  User_Point[]
+  referred     Referral[]    @relation("ReferrerRelation") //relasi user yang kasih referal jadi ke referrer_id
+  referrals    Referral[]    @relation("RefereeRelation") //relasi user yang pakai kode referalnya jadi ke referee_id
+}
+
+model Referral {
+  id           Int      @id @default(autoincrement())
+  referrer_id  Int //ID user yang kasih referal
+  referee_id   Int //ID user yang pakai referalnya
+  referee_role String   @default("attendee")
+  points       Int      @default(10000)
+  expiry_date  DateTime
+  created_at   DateTime @default(now())
+  referrer     User     @relation("ReferrerRelation", fields: [referrer_id], references: [user_id])
+  referee      User     @relation("RefereeRelation", fields: [referee_id], references: [user_id])
 }
 
 model Role {
@@ -95,8 +110,6 @@ model Transaction {
   total_price         Float //untuk harga total (setelah diskon atau beli banyak tiket)
   discount            Float                @default(0.0)
   points_used         Int                  @default(0)
-  coupon_id           Int?
-  coupon              Coupon?              @relation(fields: [coupon_id], references: [id])
   payment_status_id   Int
   payment_status      Payment_status       @relation(fields: [payment_status_id], references: [id])
   created_at          DateTime             @default(now())
@@ -123,19 +136,4 @@ model Payment_status {
   created_at   DateTime      @default(now())
   updated_at   DateTime      @updatedAt
   transactions Transaction[]
-}
-
-model Coupon {
-  id          Int           @id @default(autoincrement())
-  code        String        @unique
-  discount    Float
-  max_uses    Int           @default(1)
-  used_count  Int           @default(0)
-  user_id     Int?
-  user        User?         @relation(fields: [user_id], references: [user_id])
-  valid_from  DateTime
-  valid_until DateTime
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  Transaction Transaction[]
 }
