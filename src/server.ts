@@ -10,6 +10,8 @@ app.use(express.json());
 
 app.use("/management", eventRouter);
 
+app.use(errorMiddleware);
+
 app.listen(PORT, () => {
    console.log(`PORT ON ${PORT}`);
 });
