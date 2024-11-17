@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
-import { genSalt, hash } from "bcrypt";
+import { compare, genSalt, hash } from "bcrypt";
 import crypto from "crypto";
+import { sign } from "jsonwebtoken";
+import { SECRET_KEY } from "../utils/envConfig";
 
 const prisma = new PrismaClient();
 
@@ -55,12 +57,18 @@ async function Register(req: Request, res: Response, next: NextFunction) {
                throw new Error("Invalid referral code");
             }
 
+            const pointToAdd = 10000;
             await prisma.user_Point.create({
                data: {
                   user_id: referrer.id,
-                  points: 10000,
+                  points: pointToAdd,
                   expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
                },
+            });
+
+            await prisma.user.update({
+               where: { id: referrer.id },
+               data: { points: { increment: pointToAdd } },
             });
 
             const couponCode = generateCouponCode();
@@ -122,4 +130,33 @@ async function Register(req: Request, res: Response, next: NextFunction) {
    }
 }
 
-export { Register };
+async function Login(req: Request, res: Response, next: NextFunction) {
+   try {
+      const { email, password } = req.body;
+
+      const existingUser = await prisma.user.findUnique({
+         where: { email },
+         include: { role: true },
+      })
+
+      if (!existingUser || !(await compare(password, existingUser.password))) {
+         throw new Error("Invalid email or password");
+      }
+
+      const payload = {
+         email,
+         username: existingUser.username,
+         role: existingUser.role.name,
+      }
+
+      const token = sign(payload, SECRET_KEY as string, { expiresIn: "1h" });
+      res.status(200).send({
+         message: "Login successful",
+         access_token: token,
+      })
+   } catch (error) {
+      next(error);
+   }
+}
+
+export { Register, Login };

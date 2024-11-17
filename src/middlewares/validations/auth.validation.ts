@@ -23,3 +23,21 @@ export const RegisterValidation = [
         next();
     }
 ];
+
+export const LoginValidation = [
+    body("email")
+        .notEmpty().withMessage("Email is required")
+        .isEmail().withMessage("Email is invalid"),
+    body("password")
+        .notEmpty().withMessage('Password is required'),
+    (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error('Validation Error');
+            error.name = 'ValidationError';
+            (error as any).errors = errors.array();
+            return next(error);
+        }
+        next();
+    }
+];
