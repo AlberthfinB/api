@@ -21,23 +21,23 @@ async function firstSeedingData() {
         })
     }
 
-    // const eventStatuses = ['Published', 'Ongoing', 'Canceled', 'Completed'];
-    // for (const status of eventStatuses) {
-    //     await prisma.event_status.upsert({
-    //         where: { status_name: status },
-    //         update: {},
-    //         create: { status_name: status },
-    //     });
-    // }
+    const eventStatuses = ['Published', 'Ongoing', 'Canceled', 'Completed'];
+    for (const status of eventStatuses) {
+        await prisma.status_Event.upsert({
+            where: { status_name: status },
+            update: {},
+            create: { status_name: status },
+        });
+    }
 
-    // const eventCategories = ['Concert', 'Workshop', 'Travel'];
-    // for (const category of eventCategories) {
-    //     await prisma.event_category.upsert({
-    //         where: { category_name: category },
-    //         update: {},
-    //         create: { category_name: category },
-    //     });
-    // }
+    const eventCategories = ['Concert', 'Workshop', 'Travel'];
+    for (const category of eventCategories) {
+        await prisma.event_Category.upsert({
+            where: { event_category_name: category },
+            update: {},
+            create: { event_category_name: category },
+        });
+    }
 
     const paymentStatuses = ['Paid', 'Unpaid', 'Refunded'];
     for (const status of paymentStatuses) {

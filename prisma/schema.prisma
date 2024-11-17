@@ -59,6 +59,12 @@ model User_Point {
   user        User     @relation(fields: [user_id], references: [user_id])
 }
 
+model Status_Event {
+  status_event_id Int @id @default(autoincrement())
+  status_name     String @unique
+  event Event[]
+}
+
 model Event {
   event_id           Int                  @id @default(autoincrement())
   name_event         String               @db.VarChar(225)
@@ -68,7 +74,6 @@ model Event {
   ticket_price       Decimal              @db.Decimal(18, 2)
   promo_event        String
   seats              Int
-  status_event       String
   create_date        DateTime             @default(now())
   event_expired      DateTime
   user_id            Int
@@ -79,6 +84,8 @@ model Event {
   event_category     Event_Category       @relation(fields: [event_category_id], references: [event_category_id])
   transaction_detail Transaction_detail[]
   Promotion          Promotion[]
+  status_event_id Int
+  status_event Status_Event @relation(fields: [status_event_id],references: [status_event_id])
 }
 
 model Ticket_Type {
