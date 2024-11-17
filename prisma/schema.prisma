@@ -29,6 +29,7 @@ model User {
   user_points  User_Point[]
   referred     Referral[]    @relation("ReferrerRelation") //relasi user yang kasih referal jadi ke referrer_id
   referrals    Referral[]    @relation("RefereeRelation") //relasi user yang pakai kode referalnya jadi ke referee_id
+  Coupon       Coupon[]
 }
 
 model Referral {
@@ -82,14 +83,15 @@ model Event {
 
 model Ticket_Type {
   ticket_id          Int                  @id @default(autoincrement())
-  ticket_type        String
+  ticket_type        String               @unique
+  created_at         DateTime             @default(now())
   event              Event[]
   Transaction_detail Transaction_detail[]
 }
 
 model Event_Category {
   event_category_id   Int     @id @default(autoincrement())
-  event_category_name String
+  event_category_name String  @unique
   event               Event[]
 }
 
@@ -110,6 +112,8 @@ model Transaction {
   total_price         Float //untuk harga total (setelah diskon atau beli banyak tiket)
   discount            Float                @default(0.0)
   points_used         Int                  @default(0)
+  coupon_id           Int?
+  coupon              Coupon?              @relation(fields: [coupon_id], references: [id])
   payment_status_id   Int
   payment_status      Payment_status       @relation(fields: [payment_status_id], references: [id])
   created_at          DateTime             @default(now())
@@ -136,4 +140,19 @@ model Payment_status {
   created_at   DateTime      @default(now())
   updated_at   DateTime      @updatedAt
   transactions Transaction[]
+}
+
+model Coupon {
+  id          Int           @id @default(autoincrement())
+  code        String        @unique
+  discount    Float
+  max_uses    Int           @default(1)
+  used_count  Int           @default(0)
+  user_id     Int?
+  user        User?         @relation(fields: [user_id], references: [user_id])
+  valid_from  DateTime
+  valid_until DateTime
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  Transaction Transaction[]
 }
