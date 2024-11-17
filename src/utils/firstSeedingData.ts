@@ -6,38 +6,38 @@ async function firstSeedingData() {
     const roles = ['Attendee', 'Event Organizer'];
     for (const role of roles) {
         await prisma.role.upsert({
-            where: { name: role },
+            where: { role_name: role },
             update: {},
-            create: { name: role },
+            create: { role_name: role },
         });
     }
 
-    const ticketTypes = ['Free', 'Paid'];
-    for (const type of ticketTypes) {
-        await prisma.ticket.upsert({
+    const types = ['Free', 'Paid'];
+    for (const type of types) {
+        await prisma.ticket_Type.upsert({
             where: { ticket_type: type },
             update: {},
             create: { ticket_type: type },
-        });
+        })
     }
 
-    const eventStatuses = ['Published', 'Ongoing', 'Canceled', 'Completed'];
-    for (const status of eventStatuses) {
-        await prisma.event_status.upsert({
-            where: { status_name: status },
-            update: {},
-            create: { status_name: status },
-        });
-    }
+    // const eventStatuses = ['Published', 'Ongoing', 'Canceled', 'Completed'];
+    // for (const status of eventStatuses) {
+    //     await prisma.event_status.upsert({
+    //         where: { status_name: status },
+    //         update: {},
+    //         create: { status_name: status },
+    //     });
+    // }
 
-    const eventCategories = ['Concert', 'Workshop', 'Travel'];
-    for (const category of eventCategories) {
-        await prisma.event_category.upsert({
-            where: { category_name: category },
-            update: {},
-            create: { category_name: category },
-        });
-    }
+    // const eventCategories = ['Concert', 'Workshop', 'Travel'];
+    // for (const category of eventCategories) {
+    //     await prisma.event_category.upsert({
+    //         where: { category_name: category },
+    //         update: {},
+    //         create: { category_name: category },
+    //     });
+    // }
 
     const paymentStatuses = ['Paid', 'Unpaid', 'Refunded'];
     for (const status of paymentStatuses) {
