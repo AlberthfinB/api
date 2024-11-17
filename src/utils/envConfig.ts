@@ -3,4 +3,4 @@ config({
    path: ".env",
 });
 
-export const { PORT } = process.env;
+export const { PORT, SECRET_KEY } = process.env;
