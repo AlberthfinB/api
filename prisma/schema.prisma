@@ -18,7 +18,7 @@ model User {
   name         String        @db.VarChar(45)
   password     String
   email        String        @unique
-  referal_code String        @db.VarChar(225)
+  referal_code String        @unique
   role_id      Int
   role         Role          @relation(fields: [role_id], references: [role_id])
   points       Int           @default(0)

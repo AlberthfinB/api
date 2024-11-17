@@ -27,20 +27,18 @@ function generateCouponCode(): string {
 
 async function Register(req: Request, res: Response, next: NextFunction) {
    try {
-      const { username, email, password, role, referal_code } = req.body;
+      const { name, email, password, role, referal_code } = req.body;
 
       if (!["attendee", "event organizer"].includes(role.toLowerCase())) {
          throw new Error("Invalid role");
       }
 
       const existingUser = await prisma.user.findFirst({
-         where: {
-            OR: [{ email }, { username }],
-         },
+         where: { email },
       });
 
       if (existingUser) {
-         throw new Error("Email or username already exists");
+         throw new Error("Email already exists");
       }
 
       let referralCode = "";
@@ -60,14 +58,14 @@ async function Register(req: Request, res: Response, next: NextFunction) {
             const pointToAdd = 10000;
             await prisma.user_Point.create({
                data: {
-                  user_id: referrer.id,
+                  user_id: referrer.user_id,
                   points: pointToAdd,
                   expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
                },
             });
 
             await prisma.user.update({
-               where: { id: referrer.id },
+               where: { user_id: referrer.user_id },
                data: { points: { increment: pointToAdd } },
             });
 
@@ -94,7 +92,7 @@ async function Register(req: Request, res: Response, next: NextFunction) {
 
       const newUser = await prisma.user.create({
          data: {
-            username,
+            name,
             email,
             password: hashedPassword,
             role_id: role.toLowerCase() === "attendee" ? 1 : 2,
@@ -110,7 +108,7 @@ async function Register(req: Request, res: Response, next: NextFunction) {
          if (coupon) {
             await prisma.coupon.update({
                where: { id: coupon.id },
-               data: { user_id: newUser.id },
+               data: { user_id: newUser.user_id },
             })
          }
       }
@@ -118,8 +116,8 @@ async function Register(req: Request, res: Response, next: NextFunction) {
       res.status(201).json({
          message: "User created successfully",
          user: {
-            id: newUser.id,
-            username: newUser.username,
+            id: newUser.user_id,
+            name: newUser.name,
             email: newUser.email,
             role,
             referal_code: referralCode,
@@ -144,9 +142,9 @@ async function Login(req: Request, res: Response, next: NextFunction) {
       }
 
       const payload = {
-         email,
-         username: existingUser.username,
-         role: existingUser.role.name,
+         name: existingUser.name,
+         email: existingUser.email,
+         role: existingUser.role.role_name,
       }
 
       const token = sign(payload, SECRET_KEY as string, { expiresIn: "1h" });
