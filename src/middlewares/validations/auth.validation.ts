@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
 
 export const RegisterValidation = [
-    body("username")
-        .notEmpty().withMessage("Username is required")
-        .isLength({ min: 3 }).withMessage("Username must be at least 3 characters long"),
+    body("name")
+        .notEmpty().withMessage("name is required")
+        .isLength({ min: 3 }).withMessage("name must be at least 3 characters long"),
     body("email")
         .notEmpty().withMessage("Email is required")
         .isEmail().withMessage("Email is invalid"),

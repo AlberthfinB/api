@@ -18,7 +18,9 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
          ticket_id,
          event_category_id,
       } = req.body;
+
       const email = req.user?.email; //tunggu data token
+
       const dataUser = await prisma.user.findUnique({
          where: { email },
       });
