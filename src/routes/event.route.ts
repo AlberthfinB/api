@@ -7,8 +7,8 @@ const eventRouter = Router();
 
 const { uploadMiddleware } = SingleUploader("event_image", "events"); 
 
-eventRouter.post("/create-event",verifyToken,EventOrganizerGuard, uploadMiddleware, createEvent);
+eventRouter.post("/create-event", uploadMiddleware, createEvent);
 
-eventRouter.get("/events",verifyToken, getEventsIncoming );
+eventRouter.get("/events", getEventsIncoming );
 
 export default eventRouter;
