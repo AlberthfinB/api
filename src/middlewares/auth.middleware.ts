@@ -20,7 +20,7 @@ async function verifyToken(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-async function EventOrganizerGuard(
+async function eventOrganizerGuard(
     req: Request,
     res: Response,
     next: NextFunction
@@ -34,4 +34,4 @@ async function EventOrganizerGuard(
        next(err);
     }
  }
-export { verifyToken ,EventOrganizerGuard };
+export { verifyToken ,eventOrganizerGuard };
