@@ -20,4 +20,18 @@ async function verifyToken(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-export { verifyToken };
+async function EventOrganizerGuard(
+    req: Request,
+    res: Response,
+    next: NextFunction
+ ) {
+    try {
+       if (req.user?.role !== "Event Organizer")
+          throw new Error("Not an Event Organizer");
+ 
+       next();
+    } catch (err) {
+       next(err);
+    }
+ }
+export { verifyToken ,EventOrganizerGuard };
