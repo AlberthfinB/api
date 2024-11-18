@@ -17,7 +17,7 @@ interface CloudinaryUploadResponse {
 }
 
 export const SingleUploader = (filePrefix: string, folderName?: string) => {
-   const maxSize = 1 * 1024 * 1024; //  1MB
+   const maxSize = 5 * 1024 * 1024; //  MB
 
    const storage = multer.memoryStorage();
 
