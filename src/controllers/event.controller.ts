@@ -20,9 +20,6 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
          promo_event,
       } = req.body;
       
-
-      // const email = req.user?.email; 
-
       const {email} = req.user as User
 
       const dataUser = await prisma.user.findUnique({
@@ -90,4 +87,21 @@ async function getEventsIncoming(
    }
 }
 
-export { createEvent ,getEventsIncoming };
+async function getEventbyId (req:Request,res:Response,next:NextFunction) {
+   try{
+      const {event_id} = req.params;
+
+      const eventByid = await prisma.event.findUnique({
+         where:{
+            event_id:parseInt(event_id),
+         }
+      });
+      res.status(200).send({
+         message:"get id success",
+         eventByid,
+      });
+   }catch(err){
+      next(err);
+   }
+}
+export { createEvent ,getEventsIncoming , getEventbyId };
