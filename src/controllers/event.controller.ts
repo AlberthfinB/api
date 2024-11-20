@@ -21,7 +21,6 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
       } = req.body;
       
       const {email} = req.user as User
-
       const dataUser = await prisma.user.findUnique({
          where: { email },
       });
@@ -71,6 +70,7 @@ async function getEventsIncoming(
       const data = await prisma.event.findMany({
          where: { status_event_id: 1 },
          select: {
+            event_id:true,
             name_event: true,
             location: true,
             description: true,
