@@ -10,7 +10,7 @@ const { uploadMiddleware } = SingleUploader("event_image", "events");
 
 eventRouter.post("/create-event",verifyToken,eventOrganizerGuard, uploadMiddleware, createEvent);
 
-eventRouter.get("/events-coming",verifyToken, getEventsIncoming );
+eventRouter.get("/events-coming", getEventsIncoming );
 
 eventRouter.get("/event/:event_id",getEventbyId);
 

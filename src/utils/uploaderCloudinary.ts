@@ -32,8 +32,8 @@ export const SingleUploader = (filePrefix: string, folderName?: string) => {
          cloudinary.uploader
             .upload_stream(
                {
-                  folder:folder, // folder cloudinary
-                  public_id: filePrefix + Date.now(), // nama file di cloudinary
+                  folder:folder, 
+                  public_id: filePrefix + Date.now(),
                },
                (error, result) => {
                   if (error) {
