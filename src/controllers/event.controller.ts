@@ -36,6 +36,10 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
             "The ticket cannot have a price because it is marked as free"
          );
 
+      if (ticket_id == 1){
+         adjustedTicketPrice = 0;
+      };
+
       const newEvent = await prisma.event.create({
          data: {
             name_event,
