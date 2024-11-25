@@ -25,8 +25,8 @@ export const cloudinaryUpload = (
             folder: "events",
             transformation: [
                {
-                  width: 500, 
-                  height: 300, 
+                  // width: 500, 
+                  // height: 300, 
                   crop: "fill", 
                   gravity: "auto", 
                },
