@@ -4,6 +4,7 @@ import ErrorMiddleware from "./middlewares/error.middleware";
 import authRouter from "./routes/auth.route";
 import firstSeedingData from "./utils/firstSeedingData";
 import eventRouter from "./routes/event.route";
+import categoryRouter from "./routes/category.route";
 import cors from "cors";
 
 const PORT = Number(port) || 7000;
@@ -21,6 +22,7 @@ app.use(
 
 app.use("/management", eventRouter);
 app.use('/auth', authRouter);
+app.use("/master",categoryRouter)
 
 app.use(ErrorMiddleware);
 
