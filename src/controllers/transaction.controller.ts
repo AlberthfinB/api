@@ -115,6 +115,9 @@ async function getTransactionByEventId(req: Request, res: Response, next: NextFu
             },
             where: {
                 event_id: parseInt(eventId),
+                review:{
+                    not:null
+                }
             }
         });
         res.status(200).send(data)
