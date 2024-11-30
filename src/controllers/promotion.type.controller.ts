@@ -1,16 +1,17 @@
 import { Request,Response,NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
-async function getCategory (req:Request,res:Response,next:NextFunction){
+async function getPromotionType(req:Request,res:Response,next:NextFunction){
     try{
-        const data =await prisma.event_Category.findMany({
+        const data = await prisma.promotion_Type.findMany({
             select:{
-                event_category_id:true,
-                event_category_name:true,
+                promotion_type_id:true,
+                promotion_type:true
             },
-            orderBy:{
-                event_category_name: "asc"
+            orderBy: {
+                promotion_type_id : 'asc'
             }
         });
         res.status(200).send({
@@ -19,7 +20,7 @@ async function getCategory (req:Request,res:Response,next:NextFunction){
         })
     }catch(err){
         next(err)
-    };
+    }
 }
 
-export {getCategory};
+export {getPromotionType};

@@ -62,7 +62,7 @@ model User_Point {
 model Status_Event {
   status_event_id Int @id @default(autoincrement())
   status_name     String @unique
-  event Event[]
+  event           Event[]
 }
 
 model Event {
@@ -72,8 +72,8 @@ model Event {
   description        String               @db.VarChar(1000)
   image_event        String
   ticket_price       Decimal              @db.Decimal(18, 2)
-  promo_event        String
   seats              Int
+  available_seats    Int
   create_date        DateTime             @default(now())
   event_expired      DateTime
   user_id            Int
@@ -82,10 +82,12 @@ model Event {
   ticket_type        Ticket_Type          @relation(fields: [ticket_id], references: [ticket_id])
   event_category_id  Int
   event_category     Event_Category       @relation(fields: [event_category_id], references: [event_category_id])
-  transaction_detail Transaction_detail[]
+  promotion_type_id  Int
+  promotion_type     Promotion_Type       @relation(fields: [promotion_type_id], references: [promotion_type_id])
   Promotion          Promotion[]
-  status_event_id Int
-  status_event Status_Event @relation(fields: [status_event_id],references: [status_event_id])
+  status_event_id    Int
+  status_event       Status_Event @relation(fields: [status_event_id],references: [status_event_id])
+  Transaction        Transaction[]
 }
 
 model Ticket_Type {
@@ -93,7 +95,7 @@ model Ticket_Type {
   ticket_type        String               @unique
   created_at         DateTime             @default(now())
   event              Event[]
-  Transaction_detail Transaction_detail[]
+  Transaction        Transaction[]
 }
 
 model Event_Category {
@@ -106,10 +108,18 @@ model Promotion {
   id          Int      @id @default(autoincrement())
   event_id    Int
   event       Event    @relation(fields: [event_id], references: [event_id])
-  type        String
+  promotion_type_id Int
+  promotion_type    Promotion_Type @relation(fields: [promotion_type_id], references: [promotion_type_id])
   discount    Float
   max_uses    Int      @default(0)
   valid_until DateTime
+}
+
+model Promotion_Type {
+  promotion_type_id Int         @id @default(autoincrement())
+  promotion_type    String      @unique
+  Promotion         Promotion[]
+  event             Event[]
 }
 
 model Transaction {
@@ -125,21 +135,17 @@ model Transaction {
   payment_status      Payment_status       @relation(fields: [payment_status_id], references: [id])
   created_at          DateTime             @default(now())
   updated_at          DateTime             @updatedAt
-  transaction_details Transaction_detail[]
+  payment_proof       String?
+  review              String?
+  event_id            Int
+  event               Event          @relation(fields: [event_id], references: [event_id])
+  ticket_id           Int
+  ticket              Ticket_Type    @relation(fields: [ticket_id], references: [ticket_id])
+  quantity            Int
+  price               Float //untuk informasi harga per ticket (satuan)
+  discount_event      Float          @default(0.0) // Diskon dari promosi event
 }
 
-model Transaction_detail {
-  id             Int         @id @default(autoincrement())
-  transaction_id Int
-  transaction    Transaction @relation(fields: [transaction_id], references: [id])
-  event_id       Int
-  event          Event       @relation(fields: [event_id], references: [event_id])
-  ticket_id      Int
-  ticket         Ticket_Type @relation(fields: [ticket_id], references: [ticket_id])
-  quantity       Int
-  price          Float //untuk informasi harga per ticket (satuan)
-  discount       Float       @default(0.0) // Diskon dari promosi event
-}
 
 model Payment_status {
   id           Int           @id @default(autoincrement())

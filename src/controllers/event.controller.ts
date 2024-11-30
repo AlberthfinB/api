@@ -17,7 +17,10 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
          ticket_id,
          event_category_id,
          status_event_id,
-         promo_event,
+         promotion_type_id,
+         max_uses,
+         valid_until,
+         discount
       } = req.body;
       
       const {email} = req.user as User
@@ -25,13 +28,17 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
          where: { email },
       });
 
+      if (!dataUser) {
+         throw new Error("User not found");
+      }
+
       if (!req.file) throw new Error("Image is required");
       const cloudinaryResult = await cloudinaryUpload(req.file);
       const imageUrl = cloudinaryResult.secure_url;
 
       let adjustedTicketPrice = Number(ticket_price);
 
-      if (ticket_id == 1 && adjustedTicketPrice >= 1)
+      if (ticket_id == 1 && adjustedTicketPrice > 0)
          throw new Error(
             "The ticket cannot have a price because it is marked as free"
          );
@@ -40,25 +47,49 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
          adjustedTicketPrice = 0;
       };
 
-      const newEvent = await prisma.event.create({
-         data: {
-            name_event,
-            location,
-            description,
-            image_event: imageUrl,
-            ticket_price: adjustedTicketPrice,
-            seats: Number(seats),
-            promo_event,
-            event_expired,
-            status_event_id:Number(status_event_id),
-            user_id: Number(dataUser?.user_id),
-            ticket_id: Number(ticket_id),
-            event_category_id: Number(event_category_id),
-         },
-      });
-      res.status(201).send({
-         message: "Create Event Success",
-         newEvent,
+      const eventExpired = new Date(event_expired).toISOString();
+      const validUntil = valid_until ? new Date(valid_until).toISOString() : eventExpired;
+
+
+      await prisma.$transaction(async (prisma) => {
+         const newEvent = await prisma.event.create({
+            data: {
+               name_event,
+               location,
+               description,
+               image_event: imageUrl,
+               ticket_price: adjustedTicketPrice,
+               seats: Number(seats),
+               available_seats: Number(seats),
+               event_expired: eventExpired,
+               status_event_id: Number(status_event_id),
+               user_id: Number(dataUser.user_id),
+               ticket_id: Number(ticket_id),
+               event_category_id: Number(event_category_id),
+               promotion_type_id: promotion_type_id ? Number(promotion_type_id) : 0,
+            },
+         });
+
+         if (promotion_type_id > 0) {
+            await prisma.promotion.create({
+               data: {
+                  event_id: newEvent.event_id,
+                  discount: Number(discount),
+                  max_uses: Number(max_uses),
+                  valid_until: validUntil,
+                  promotion_type_id: Number(promotion_type_id),
+               },
+            });
+         }
+
+         res.status(201).send({
+            code: 201,
+            message: "Create Event Success",
+            data: {
+               newEvent,
+               newPromotion: promotion_type_id > 0 ? "Promotion created" : null
+            },
+         });
       });
    } catch (err) {
       next(err);
@@ -74,7 +105,7 @@ async function getEventsIncoming(
       const {pageNumber,location,pageSize,search,category} = req.query;
 
       const page = Number(pageNumber as string) || 1; 
-      const size = Number(pageSize as string) || 10; 
+      const size = Number(pageSize as string) || 8; 
       const event = (search as string) || "";
       const loc = (location as string) || "";
       const categoryId = Number(category as string) || 0;
@@ -85,6 +116,7 @@ async function getEventsIncoming(
         AND : [
          categoryId > 0 ? {event_category_id : categoryId} : {},
          {
+            status_event_id: 1,
             name_event : {
                contains: event,
             },
@@ -132,7 +164,11 @@ async function getEventbyId (req:Request,res:Response,next:NextFunction) {
 
       const eventByid = await prisma.event.findUnique({
          where:{
-            event_id:parseInt(event_id),
+            event_id:Number(event_id),
+         },
+         include:{
+            promotion_type:true,
+            Promotion:true
          }
       });
       res.status(200).send({
@@ -143,4 +179,18 @@ async function getEventbyId (req:Request,res:Response,next:NextFunction) {
       next(err);
    }
 }
-export { createEvent ,getEventsIncoming , getEventbyId };
+
+async function getEventsComplete(req: Request, res: Response, next: NextFunction) {
+   try {
+      const response = await prisma.event.findMany({
+         // include: {
+         //    testimoni: true,
+         // },
+         where: { status_event_id: 4 },
+      });
+      res.status(200).send(response);
+   } catch (err) {
+      next(err);
+   }
+}
+export { createEvent ,getEventsIncoming , getEventbyId , getEventsComplete };
