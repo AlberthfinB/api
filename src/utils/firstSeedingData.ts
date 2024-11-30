@@ -47,6 +47,15 @@ async function firstSeedingData() {
             create: { name: status },
         });
     }
+
+    const promotionTypes = ['None', 'Limited Vouchers', 'Limited Time'];
+    for (const type of promotionTypes) {
+        await prisma.promotion_Type.upsert({
+            where: { promotion_type: type },
+            update: {},
+            create: { promotion_type: type },
+        })
+    }
 }
 
 export default firstSeedingData;
