@@ -26,112 +26,121 @@ function generateCouponCode(): string {
 }
 
 async function Register(req: Request, res: Response, next: NextFunction) {
-   try {
-      const { name, email, password, role, referal_code } = req.body;
+   const { name, email, password, role, referal_code } = req.body;
 
-      if (!["participant", "event organizer"].includes(role.toLowerCase())) {
-         throw new Error("Invalid role");
-      }
+   const transaction = await prisma.$transaction(async (prisma) => {
+      try {
+         if (!["participant", "event organizer"].includes(role.toLowerCase())) {
+            throw new Error("Invalid role");
+         }
 
-      const existingUser = await prisma.user.findFirst({
-         where: { email },
-      });
+         const existingUser = await prisma.user.findFirst({
+            where: { email },
+         });
 
-      if (existingUser) {
-         throw new Error("Email already exists");
-      }
+         if (existingUser) {
+            throw new Error("Email already exists");
+         }
 
-      let referralCode = "";
-      let referrer = null;
-      let couponCode = "";
+         let referralCode = "";
+         let referrer = null;
+         let couponCode = "";
 
-      if (role.toLowerCase() === "participant") {
-         referralCode = await checkUniqueReferralCode(generateReferralCode());
+         if (role.toLowerCase() === "participant") {
+            referralCode = await checkUniqueReferralCode(generateReferralCode());
+
+            if (referal_code) {
+               referrer = await prisma.user.findUnique({
+                  where: { referal_code }
+               });
+
+               if (!referrer) {
+                  throw new Error("Invalid referral code");
+               }
+
+               const pointToAdd = 10000;
+               await prisma.user_Point.create({
+                  data: {
+                     user_id: referrer.user_id,
+                     points: pointToAdd,
+                     expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+                  },
+               });
+
+               await prisma.user.update({
+                  where: { user_id: referrer.user_id },
+                  data: { points: { increment: pointToAdd } },
+               });
+
+               couponCode = generateCouponCode();
+               await prisma.coupon.create({
+                  data: {
+                     code: couponCode,
+                     discount: 0.10,
+                     max_uses: 1,
+                     valid_from: new Date(),
+                     valid_until: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+                     user_id: null,
+                  },
+               });
+            }
+         }
+
+         if (role.toLowerCase() === 'event organizer' && referal_code) {
+            throw new Error('Event organizer cannot use referal code ');
+         }
+
+         const salt = await genSalt(10);
+         const hashedPassword = await hash(password, salt);
+
+         const newUser = await prisma.user.create({
+            data: {
+               name,
+               email,
+               password: hashedPassword,
+               role_id: role.toLowerCase() === "participant" ? 1 : 2,
+               referal_code: referralCode,
+            }
+         })
+
+         if (referal_code && referrer) {
+            await prisma.referral.create({
+               data: {
+                  referrer_id: referrer.user_id,
+                  referee_id: newUser.user_id,
+                  points: 10000,
+                  expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+               }
+            });
+         }
 
          if (referal_code) {
-            referrer = await prisma.user.findUnique({
-               where: { referal_code }
-            });
-
-            if (!referrer) {
-               throw new Error("Invalid referral code");
-            }
-
-            const pointToAdd = 10000;
-            await prisma.user_Point.create({
-               data: {
-                  user_id: referrer.user_id,
-                  points: pointToAdd,
-                  expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
-               },
-            });
-
-            await prisma.user.update({
-               where: { user_id: referrer.user_id },
-               data: { points: { increment: pointToAdd } },
-            });
-
-            couponCode = generateCouponCode();
-            await prisma.coupon.create({
-               data: {
-                  code: couponCode,
-                  discount: 0.10,
-                  max_uses: 1,
-                  valid_from: new Date(),
-                  valid_until: new Date(new Date().setMonth(new Date().getMonth() + 3)),
-                  user_id: null,
-               },
-            });
+            await prisma.coupon.updateMany({
+               where: { code: couponCode, user_id: null },
+               data: { user_id: newUser.user_id },
+            })
          }
+
+         return newUser;
+
+      } catch (error) {
+         next(error);
       }
+   });
 
-      if (role.toLowerCase() === 'event organizer' && referal_code) {
-         throw new Error('Event organizer cannot use referal code ');
-      }
-
-      const salt = await genSalt(10);
-      const hashedPassword = await hash(password, salt);
-
-      const newUser = await prisma.user.create({
-         data: {
-            name,
-            email,
-            password: hashedPassword,
-            role_id: role.toLowerCase() === "participant" ? 1 : 2,
-            referal_code: referralCode,
-         }
-      })
-
-      if (referal_code && referrer) {
-         await prisma.referral.create({
-            data: {
-               referrer_id: referrer.user_id,
-               referee_id: newUser.user_id,
-               points: 10000,
-               expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
-            }
-         });
-      }
-
-      if (referal_code) {
-         const coupon = await prisma.coupon.updateMany({
-            where: { code: couponCode, user_id: null },
-            data: { user_id: newUser.user_id },
-         })
-      }
-
+   if (transaction) {
       res.status(201).json({
          message: "User created successfully",
          user: {
-            id: newUser.user_id,
-            name: newUser.name,
-            email: newUser.email,
+            id: transaction.user_id,
+            name: transaction.name,
+            email: transaction.email,
             role,
-            referal_code: referralCode,
+            referal_code: transaction.referal_code,
          }
-      })
-   } catch (error) {
-      next(error);
+      });
+   } else {
+      throw new Error("User creation failed");
    }
 }
 
@@ -156,7 +165,7 @@ async function Login(req: Request, res: Response, next: NextFunction) {
       }
 
       const token = sign(payload, SECRET_KEY as string, { expiresIn: "5h" });
-      res.status(200).cookie("access_token",token).send({
+      res.status(200).cookie("access_token", token).send({
          message: "Login successful",
          access_token: token,
       })
