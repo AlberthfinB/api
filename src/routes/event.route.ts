@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createEvent ,getEventsIncoming , getEventbyId } from "../controllers/event.controller";
+import { createEvent ,getEventsIncoming , getEventbyId,getEventsComplete } from "../controllers/event.controller";
 import { verifyToken,eventOrganizerGuard } from "../middlewares/auth.middleware";
 import { SingleUploader } from "../utils/uploaderCloudinary";
 
@@ -11,7 +11,7 @@ const { uploadMiddleware } = SingleUploader("event_image", "events");
 eventRouter.post("/create-event",verifyToken,eventOrganizerGuard, uploadMiddleware, createEvent);
 
 eventRouter.get("/events-coming", getEventsIncoming );
-
+eventRouter.get("/events-complete", getEventsComplete);
 eventRouter.get("/event/:event_id",getEventbyId);
 
 export default eventRouter;
