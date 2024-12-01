@@ -24,7 +24,7 @@ export const SingleUploader = (filePrefix: string, folderName?: string) => {
    const upload = multer({
       storage: storage,
       limits: { fileSize: maxSize },
-   }).single("image_event");
+   }).single(filePrefix);
 
    const uploadToCloudinary = async (file: Express.Multer.File) => {
       return new Promise<CloudinaryUploadResponse>((resolve, reject) => {
