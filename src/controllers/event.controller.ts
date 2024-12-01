@@ -70,7 +70,9 @@ async function createEvent(req: Request, res: Response, next: NextFunction) {
             },
          });
 
-         if (promotion_type_id > 0) {
+         
+
+         if (promotion_type_id > 1) {
             await prisma.promotion.create({
                data: {
                   event_id: newEvent.event_id,
