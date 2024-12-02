@@ -6,7 +6,7 @@ import { SingleUploader } from "../utils/uploaderCloudinary";
 
 const eventRouter = Router();
 
-const { uploadMiddleware } = SingleUploader("event_image", "events"); 
+const { uploadMiddleware } = SingleUploader("image_event", "events"); 
 
 eventRouter.post("/create-event",verifyToken,eventOrganizerGuard, uploadMiddleware, createEvent);
 
