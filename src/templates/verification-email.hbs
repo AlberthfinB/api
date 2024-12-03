@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title></title>
+
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         background-color: #f4f4f4;
+         margin: 0;
+         padding: 0;
+      }
+
+      .email-container {
+         width: 100%;
+         max-width: 600px;
+         margin: 0 auto;
+         background-color: #ffffff;
+         border-radius: 8px;
+         overflow: hidden;
+      }
+
+      .email-header {
+         background-color: #007bff;
+         color: #ffffff;
+         padding: 30px;
+         text-align: center;
+      }
+
+      .email-header img {
+         max-width: 120px;
+      }
+
+      .email-body {
+         padding: 20px;
+         color: #333;
+      }
+
+      .email-body h2 {
+         color: #007bff;
+      }
+
+      .email-body p {
+         font-size: 16px;
+         line-height: 1.5;
+      }
+
+      .email-body .button {
+         display: inline-block;
+         padding: 12px 25px;
+         background-color: #007bff;
+         color: white;
+         text-decoration: none;
+         border-radius: 4px;
+         font-size: 16px;
+         margin-top: 20px;
+      }
+
+      .email-footer {
+         background-color: #f4f4f4;
+         text-align: center;
+         padding: 15px;
+         font-size: 14px;
+         color: #777;
+      }
+
+      @media (max-width: 600px) {
+
+         .email-header,
+         .email-body {
+            padding: 20px;
+         }
+      }
+   </style>
+</head>
+
+<body>
+   <div class="email-container">
+        <div class="email-header">
+            <img src="{{logoUrl}}" alt="Company Logo">
+        </div>
+        <div class="email-body">
+            <h2>Welcome {{name}}!</h2>
+            <p>Thank you for registering with us. To complete your registration, please verify your email address by clicking the button below:</p>
+            <a href="{{verificationUrl}}" class="button">Verify Your Email</a>
+            <p>If you didn't register for this account, please ignore this email.</p>
+            <br>
+            <small>The email was sent to {{emailUser}}.</small>
+        </div>
+        <div class="email-footer">
+            <p>&copy; 2024. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>
