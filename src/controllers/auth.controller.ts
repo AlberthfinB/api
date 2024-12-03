@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { compare, genSalt, hash } from "bcrypt";
 import crypto from "crypto";
 import { sign } from "jsonwebtoken";
-import { SECRET_KEY } from "../utils/envConfig";
+import { BASE_WEB_URL, SECRET_KEY } from "../utils/envConfig";
+import { tranporter } from "../lib/mail";
+import { User } from "../custom";
+import path from "path";
+import fs from "fs";
+import Handlebars from "handlebars";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +51,10 @@ async function Register(req: Request, res: Response, next: NextFunction) {
          let referrer = null;
          let couponCode = "";
 
+         if (role.toLowerCase() === 'event organizer' && referal_code) {
+            throw new Error('Event organizer cannot use referal code ');
+         }
+
          if (role.toLowerCase() === "participant") {
             referralCode = await checkUniqueReferralCode(generateReferralCode());
 
@@ -86,10 +95,6 @@ async function Register(req: Request, res: Response, next: NextFunction) {
             }
          }
 
-         if (role.toLowerCase() === 'event organizer' && referal_code) {
-            throw new Error('Event organizer cannot use referal code ');
-         }
-
          const salt = await genSalt(10);
          const hashedPassword = await hash(password, salt);
 
@@ -102,6 +107,22 @@ async function Register(req: Request, res: Response, next: NextFunction) {
                referal_code: referralCode,
             }
          })
+
+         const payload = { email };
+         const token = sign(payload, SECRET_KEY as string, { expiresIn: "1hr" });
+         // console.log(`Generated token: ${token}`);
+         const templatePath = path.join(__dirname, "../templates", "verification-email.hbs");
+         const verificationUrl = BASE_WEB_URL + `/verify/${token}`;
+         const templateSource = fs.readFileSync(templatePath, "utf-8");
+         const compiledTemplate = Handlebars.compile(templateSource);
+         const html = compiledTemplate({ name, verificationUrl, emailUser: email });
+
+
+         await tranporter.sendMail({
+            to: email,
+            subject: "Verification Email",
+            html,
+         });
 
          if (referal_code && referrer) {
             await prisma.referral.create({
@@ -153,6 +174,9 @@ async function Login(req: Request, res: Response, next: NextFunction) {
          include: { role: true },
       })
 
+      if (!existingUser?.isVerified) {
+         throw new Error("Please verify your account first");
+      }
       if (!existingUser || !(await compare(password, existingUser.password))) {
          throw new Error("Invalid email or password");
       }
@@ -164,7 +188,7 @@ async function Login(req: Request, res: Response, next: NextFunction) {
          user_id: existingUser.user_id
       }
 
-      const token = sign(payload, SECRET_KEY as string, { expiresIn: "5h" });
+      const token = sign(payload, SECRET_KEY as string, { expiresIn: "5hr" });
       res.status(200).cookie("access_token", token).send({
          message: "Login successful",
          access_token: token,
@@ -174,4 +198,43 @@ async function Login(req: Request, res: Response, next: NextFunction) {
    }
 }
 
-export { Register, Login };
+async function VerifyUser(req: Request, res: Response, next: NextFunction) {
+   try {
+      const { email } = req.user as User;
+      console.log(email);
+      await prisma.user.update({
+         where: { email },
+         data: {
+            isVerified: true,
+         }
+      })
+      res.status(200).send({
+         message: "User verified successfully",
+      })
+   } catch (error) {
+      next(error);
+   }
+}
+
+async function getReferralCode(req: Request, res: Response, next: NextFunction) {
+   try {
+      const { email } = req.user as User;
+      const user = await prisma.user.findUnique({
+         where: { email },
+         select: { referal_code: true },
+      });
+
+      if (!user) {
+         throw new Error("User not found");
+      }
+
+      res.status(200).json({
+         message: "Referral code retrieved successfully",
+         data: user.referal_code,
+      });
+   } catch (error) {
+      next(error);
+   }
+}
+
+export { Register, Login, VerifyUser, getReferralCode };

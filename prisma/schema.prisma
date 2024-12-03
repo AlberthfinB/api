@@ -22,6 +22,7 @@ model User {
   role_id      Int
   role         Role          @relation(fields: [role_id], references: [role_id])
   points       Int           @default(0)
+  isVerified   Boolean       @default(false)
   created_at   DateTime      @default(now())
   updated_at   DateTime      @updatedAt
   event        Event[]
