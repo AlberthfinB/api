@@ -104,7 +104,7 @@ async function Register(req: Request, res: Response, next: NextFunction) {
                email,
                password: hashedPassword,
                role_id: role.toLowerCase() === "participant" ? 1 : 2,
-               referal_code: referralCode,
+               referal_code: role.toLowerCase() === "participant" ? referralCode : null,
             }
          })
 
